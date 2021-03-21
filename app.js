@@ -45,7 +45,8 @@ mongoose.set("useCreateIndex", true);
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
-  googleId: String
+  googleId: String,
+  secret: String
 });
 
 
@@ -112,12 +113,43 @@ app.get("/register", function (req, res) {
 });
 
 app.get("/secrets", (req, res) => {
+  //find all users with a secret
+  User.find({ "secret": {$ne:null} }, (err, foundUsers) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.render("secrets", {usersWithSecrets: foundUsers})
+    }
+  })
+});
+
+
+app.get("/submit", (req, res) => {
   //make sure user is logged-in
   if (req.isAuthenticated()) {
-    res.render("secrets");
+    res.render("submit");
   } else {
     res.redirect("/login");
   }
+});
+
+
+app.post("/submit", (req, res) => {
+  const submittedSecret = req.body.secret;
+
+  //find who current user is
+  console.log(req.user);
+  User.findById(req.user.id, (err, foundUser) => {
+    if (err) {
+      console.log(err);
+    } else {
+      foundUser.secret = submittedSecret;
+      foundUser.save(function() {
+        res.redirect("/secrets");
+      })
+    }
+  })
+
 });
 
 
